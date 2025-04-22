@@ -1,7 +1,7 @@
 
 # VITS-Pytorch Lightning Refactored Training
 
-이 리포지토리는 VITS(Variational Inference with Adversarial Learning 기반 TTS) 모델의 학습 스크립트를 PyTorch Lightning v2.5 기준으로 리팩토링한 코드입니다.
+이 리포지토리는 VITS 모델의 학습 스크립트를 PyTorch Lightning v2.5 기준으로 리팩토링한 코드입니다.
 
 - **PyTorch Lightning 2.x 호환**
   - `Trainer(precision=16)` 를 이용한 자동 Mixed-Precision

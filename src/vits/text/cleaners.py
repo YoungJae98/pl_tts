@@ -15,6 +15,8 @@ hyperparameter. Some cleaners are English-specific. You'll typically want to use
 import re
 from unidecode import unidecode
 from phonemizer import phonemize
+from .korean import tokenize as ko_tokenize
+from phonemizer.separator import Separator
 
 
 # Regular expression matching whitespace:
@@ -79,22 +81,19 @@ def transliteration_cleaners(text):
   text = collapse_whitespace(text)
   return text
 
-
-def english_cleaners(text):
-  '''Pipeline for English text, including abbreviation expansion.'''
-  text = convert_to_ascii(text)
-  text = lowercase(text)
-  text = expand_abbreviations(text)
-  phonemes = phonemize(text, language='en-us', backend='espeak', strip=True)
-  phonemes = collapse_whitespace(phonemes)
-  return phonemes
-
-
-def english_cleaners2(text):
+def ipa_converter(text, lang_code):
   '''Pipeline for English text, including abbreviation expansion. + punctuation + stress'''
-  text = convert_to_ascii(text)
-  text = lowercase(text)
-  text = expand_abbreviations(text)
-  phonemes = phonemize(text, language='en-us', backend='espeak', strip=True, preserve_punctuation=True, with_stress=True)
-  phonemes = collapse_whitespace(phonemes)
+
+  phonemes = phonemize(
+        text,
+        language=lang_code,
+        backend="espeak",
+        separator=Separator(phone=None, word=" ", syllable=None),
+        strip=True,
+        with_stress=True,
+        preserve_punctuation=True,
+        language_switch="remove-flags",
+        njobs=32,
+    )
+  
   return phonemes

@@ -31,7 +31,8 @@ if __name__ == '__main__':
         devices=gpu_num,          # GPU 개수
         max_epochs=hps.train.epochs,
         strategy=ddp,             # 위에서 정의한 DDP,
-        use_distributed_sampler=False
+        use_distributed_sampler=False,
+        enable_checkpointing=False,
     )
 
     # 학습 시작

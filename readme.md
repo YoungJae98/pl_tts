@@ -17,19 +17,11 @@
   - `librosa.filters.mel` 의 positional → keyword 인자 전환
 
 
-## 요구사항
-
+## 기본 요구사항
 - Python >= 3.9
 - PyTorch >= 2.0
 - PyTorch Lightning >= 2.5
-- CUDA Toolkit (8 GPU 분산 학습 시 NCCL 필요)
-- torchaudio, librosa, scipy, tqdm, wandb(선택)
-
-bash
-pip install -r requirements.txt
-
-
-## 사용 방법
+- monotonic alignment는 monotonic alignment 폴더에서 pip install -e . 하면 설정가능 (python setup.py build_ext --inplace는 오류 발생)
 
 
 리팩토링 관련 문의는 PR 혹은 Issue를 통해 남겨주세요! 🎉

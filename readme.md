@@ -21,6 +21,7 @@
 - Python >= 3.9
 - PyTorch >= 2.0
 - PyTorch Lightning >= 2.5
+- pip install -r requirements.txt
 - monotonic alignment는 monotonic alignment 폴더에서 pip install -e . 하면 설정가능 (python setup.py build_ext --inplace는 오류 발생)
 
 

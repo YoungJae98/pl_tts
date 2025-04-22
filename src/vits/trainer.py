@@ -109,7 +109,7 @@ class VitsTrainer(pl.LightningModule):
         loss_gen, *_ = generator_loss(y_d_hat_g)
         loss_gen_all = loss_gen + loss_fm + loss_mel + loss_dur + loss_kl
 
-        self.losses = [loss_disc, loss_gen, loss_fm, loss_mel, loss_kl]
+        self.losses = [loss_disc, loss_gen, loss_fm, loss_mel, loss_dur, loss_kl]
 
         optim_g.zero_grad()
         self.manual_backward(loss_gen_all)

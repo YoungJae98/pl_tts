@@ -21,6 +21,7 @@ if __name__ == '__main__':
         process_group_backend="nccl",
         timeout=datetime.timedelta(seconds=5400),
         find_unused_parameters=True,
+        gradient_as_bucket_view=True,
     )
 
     # Trainer: 최소 구성

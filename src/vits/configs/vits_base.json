@@ -9,8 +9,8 @@
         "fp16_run": true,
         "lr_decay": 0.999875,
         "segment_size": 8192,
-        "per_save_step": 5000,
-        "per_log_step": 500,
+        "per_save_step": 2000,
+        "per_log_step": 200,
         "init_lr_ratio": 1,
         "warmup_epochs": 0,
         "c_mel": 45,
@@ -39,6 +39,7 @@
         "filter_channels": 768,
         "n_heads": 2,
         "n_layers": 6,
+        "n_mels": 80,
         "kernel_size": 3,
         "p_dropout": 0.1,
         "resblock": "1",
@@ -79,6 +80,8 @@
         ],
         "n_layers_q": 3,
         "use_spectral_norm": false,
-        "gin_channels":256
+        "gin_channels":256,
+        "use_sdp": true,
+        "ref_speaker": true
     }
 }

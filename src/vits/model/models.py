@@ -127,6 +127,51 @@ class DurationPredictor(nn.Module):
     x = self.drop(x)
     x = self.proj(x * x_mask)
     return x * x_mask
+  
+class ReferenceEncoder(nn.Module):
+
+    def __init__(self, gin_channels):
+
+        super().__init__()
+        ref_enc_filters = [32, 32, 64, 64, 128, 128]
+        K = len(ref_enc_filters)
+        filters = [1] + ref_enc_filters
+
+        convs = [nn.Conv2d(in_channels=filters[i],
+                           out_channels=filters[i + 1],
+                           kernel_size=(3, 3),
+                           stride=(2, 2),
+                           padding=(1, 1)) for i in range(K)]
+        self.convs = nn.ModuleList(convs)
+        self.bns = nn.ModuleList([nn.BatchNorm2d(num_features=ref_enc_filters[i]) for i in range(K)])
+
+        out_channels = self.calculate_channels(513, 3, 2, 1, K)
+        self.gru = nn.GRU(input_size=ref_enc_filters[-1] * out_channels,
+                          hidden_size=gin_channels // 2,
+                          batch_first=True,
+                          bidirectional = True)
+
+    def forward(self, inputs):
+        N = inputs.size(0)
+        out = inputs.view(N, 1, -1, 513) 
+        for conv, bn in zip(self.convs, self.bns):
+            out = conv(out)
+            out = bn(out)
+            out = F.relu(out) 
+
+        out = out.transpose(1, 2) 
+        T = out.size(1)
+        N = out.size(0)
+        out = out.contiguous().view(N, T, -1) 
+
+        _, out = self.gru(out)
+        out = torch.cat([out[0], out[1]], dim=-1)
+        return out
+
+    def calculate_channels(self, L, kernel_size, stride, pad, n_convs):
+        for _ in range(n_convs):
+            L = (L - kernel_size + 2 * pad) // stride + 1
+        return L
 
 
 class TextEncoder(nn.Module):
@@ -406,9 +451,10 @@ class SynthesizerTrn(nn.Module):
     upsample_rates, 
     upsample_initial_channel, 
     upsample_kernel_sizes,
-    n_speakers=0,
-    gin_channels=0,
-    use_sdp=True,
+    n_speakers,
+    gin_channels,
+    use_sdp,
+    ref_speaker,
     **kwargs):
 
     super().__init__()
@@ -430,8 +476,9 @@ class SynthesizerTrn(nn.Module):
     self.segment_size = segment_size
     self.n_speakers = n_speakers
     self.gin_channels = gin_channels
-
+    self.ref_speaker = ref_speaker
     self.use_sdp = use_sdp
+
 
     self.enc_p = TextEncoder(n_vocab,
         inter_channels,
@@ -444,6 +491,7 @@ class SynthesizerTrn(nn.Module):
     self.dec = Generator(inter_channels, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
     self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)
     self.flow = ResidualCouplingBlock(inter_channels, hidden_channels, 5, 1, 4, gin_channels=gin_channels)
+    self.spk = ReferenceEncoder(gin_channels)
 
     if use_sdp:
       self.dp = StochasticDurationPredictor(hidden_channels, 192, 3, 0.5, 4, gin_channels=gin_channels)
@@ -456,10 +504,10 @@ class SynthesizerTrn(nn.Module):
   def forward(self, x, x_lengths, y, y_lengths, sid=None):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    if self.n_speakers > 1:
-      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+    if self.ref_speaker:
+      g = self.spk(y.transpose(1,2)).unsqueeze(-1)
     else:
-      g = None
+      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
 
     z, m_q, logs_q, y_mask = self.enc_q(y, y_lengths, g=g)
     z_p = self.flow(z, y_mask, g=g)

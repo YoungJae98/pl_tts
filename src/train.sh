@@ -1,6 +1,6 @@
 date
 
-model_name="vits_pl_test"
+model_name="vits_ref_test"
 training_file="data/train_txt/ms_model_train_pp.txt"
 m_port=3457
 FOLDER="vits/checkpoints/${model_name}"

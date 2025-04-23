@@ -145,8 +145,8 @@ class VitsTrainer(pl.LightningModule):
 
     def on_train_epoch_end(self):
         # log epoch summary
-        if self.global_rank == 0:
-            self.logger_.info(f"Done Epoch:{self.vits_epoch} / Losses:{[x.item() for x in self.losses]}")
+        # if self.global_rank == 0:
+        #     self.logger_.info(f"Epoch:{self.vits_epoch} / Step:{self.vits_step} / Losses:{[x.item() for x in self.losses]}")
         self.vits_epoch += 1
 
     def configure_optimizers(self):

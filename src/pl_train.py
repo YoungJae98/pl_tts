@@ -23,6 +23,7 @@ if __name__ == '__main__':
         find_unused_parameters=True,
         gradient_as_bucket_view=True,
     )
+    
 
     # Trainer: 최소 구성
     trainer = pl.Trainer(

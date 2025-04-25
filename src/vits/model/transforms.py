@@ -102,6 +102,11 @@ def rational_quadratic_spline(inputs,
                               min_bin_width=DEFAULT_MIN_BIN_WIDTH,
                               min_bin_height=DEFAULT_MIN_BIN_HEIGHT,
                               min_derivative=DEFAULT_MIN_DERIVATIVE):
+    
+    if inputs.numel() == 0:
+        # inputs가 비어 있으면 변형 없이 바로 반환
+        return inputs, torch.zeros_like(inputs)
+
     if torch.min(inputs) < left or torch.max(inputs) > right:
         raise ValueError('Input to a transform is not within its domain')
 

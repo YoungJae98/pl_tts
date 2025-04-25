@@ -491,17 +491,20 @@ class SynthesizerTrn(nn.Module):
     self.dec = Generator(inter_channels, resblock, resblock_kernel_sizes, resblock_dilation_sizes, upsample_rates, upsample_initial_channel, upsample_kernel_sizes, gin_channels=gin_channels)
     self.enc_q = PosteriorEncoder(spec_channels, inter_channels, hidden_channels, 5, 1, 16, gin_channels=gin_channels)
     self.flow = ResidualCouplingBlock(inter_channels, hidden_channels, 5, 1, 4, gin_channels=gin_channels)
-    self.spk = ReferenceEncoder(gin_channels)
+    
 
     if use_sdp:
       self.dp = StochasticDurationPredictor(hidden_channels, 192, 3, 0.5, 4, gin_channels=gin_channels)
     else:
       self.dp = DurationPredictor(hidden_channels, 256, 3, 0.5, gin_channels=gin_channels)
 
-    if n_speakers > 1:
+    if self.ref_speaker:
+      self.spk = ReferenceEncoder(gin_channels)
+    else:
       self.emb_g = nn.Embedding(n_speakers, gin_channels)
+    
 
-  def forward(self, x, x_lengths, y, y_lengths, sid=None):
+  def forward(self, x, x_lengths, y, y_lengths, sid=None, is_fixed=False, is_clip=True):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
     if self.ref_speaker:
@@ -537,16 +540,22 @@ class SynthesizerTrn(nn.Module):
     m_p = torch.matmul(attn.squeeze(1), m_p.transpose(1, 2)).transpose(1, 2)
     logs_p = torch.matmul(attn.squeeze(1), logs_p.transpose(1, 2)).transpose(1, 2)
 
-    z_slice, ids_slice = commons.rand_slice_segments(z, y_lengths, self.segment_size)
+    if is_clip:
+      if is_fixed:
+        z_slice, ids_slice = commons.fix_slice_segments(z, y_lengths, self.segment_size)
+      else:
+        z_slice, ids_slice = commons.rand_slice_segments(z, y_lengths, self.segment_size)
+
     o = self.dec(z_slice, g=g)
     return o, l_length, attn, ids_slice, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
 
-  def infer(self, x, x_lengths, sid=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
+  def infer(self, x, x_lengths, y=None, sid=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    if self.n_speakers > 0:
-      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+
+    if self.ref_speaker:
+      g = self.spk(y.transpose(1,2)).unsqueeze(-1)
     else:
-      g = None
+      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
 
     if self.use_sdp:
       logw = self.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)

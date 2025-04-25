@@ -1,13 +1,13 @@
 date
 
-model_name="vits_ref_test"
-training_file="data/train_txt/ms_model_train_pp.txt"
+model_name="vits_ref_pt"
+training_file="data/train_txt/model_train.txt"
 m_port=3457
 FOLDER="vits/checkpoints/${model_name}"
 batch_size=24
 learning_rate=0.0002
 epochs=2000
-n_speakers=61
+n_speakers=51
 
 
 if [ ! -d $FOLDER ]; then

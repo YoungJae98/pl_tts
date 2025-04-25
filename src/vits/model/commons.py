@@ -53,6 +53,19 @@ def slice_segments(x, ids_str, segment_size=4):
     ret[i] = x[i, :, idx_str:idx_end]
   return ret
 
+def fix_slice_segments(x, x_lengths=None, segment_size=4):
+  seed = 1234
+  torch.manual_seed(seed)
+  torch.cuda.manual_seed(seed)
+
+  b, d, t = x.size()
+  if x_lengths is None:
+    x_lengths = t
+  ids_str_max = x_lengths - segment_size + 1
+  # ids_str = (torch.rand([b]).to(device=x.device) * ids_str_max).to(dtype=torch.long)
+  ids_str = (torch.zeros([b]).to(device=x.device) * ids_str_max).to(dtype=torch.long)
+  ret = slice_segments(x, ids_str, segment_size)
+  return ret, ids_str
 
 def rand_slice_segments(x, x_lengths=None, segment_size=4):
   b, d, t = x.size()

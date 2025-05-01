@@ -66,6 +66,7 @@ def batch_text_to_sequence(text, language_code, group_size):
   sequences = []
 
   clean_text = _clean_text(text, lang_code[language_code])
+  print(clean_text)
   clean_text_list = re.split(r"(?<=[.!?])\s+", clean_text.strip())
 
   grouped_sentences = []

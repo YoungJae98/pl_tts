@@ -218,4 +218,6 @@ class VitsTrainer(pl.LightningModule):
         )
         if self.vits_epoch != 1:
             self.vits_step = self.vits_epoch * len(loader)
+            self.logger_.info(f"Epoch:{self.vits_epoch} / Step:{self.vits_step}")
+
         return loader

@@ -13,20 +13,33 @@ def get_spec(hps, waves, waves_len):
 
     for index, wave in enumerate(waves):
         audio_norm = wave[:, :waves_len[index]]
-        spec = spectrogram_torch(audio_norm.squeeze(1),
+        # print(audio_norm.shape)
+        spec = spectrogram_torch(audio_norm,
                                  hps.filter_length, hps.sampling_rate,
                                  hps.hop_length, hps.win_length,
                                  center=False)
+        
         spec = torch.squeeze(spec, 0)
         spec_np.append(spec)
         spec_lengths[index] = spec.size(1)
 
     max_spec_len = max(spec_lengths)
-    spec_padded = torch.FloatTensor(len(waves), spec_np[0].size(0), max_spec_len)
-    spec_padded.zero_()
+    spec_padded = torch.zeros(
+        len(waves),
+        spec_np[0].size(0),
+        max_spec_len,
+        device=waves.device,
+        dtype=spec_np[0].dtype
+    )
+    for i, spec in enumerate(spec_np):
+        spec_padded[i, :, :spec_lengths[i]] = spec
+    # spec_padded = torch.FloatTensor(len(waves), spec_np[0].size(0), max_spec_len)
+    # spec_padded.zero_()
 
-    for i, spec in enumerate(waves):
-        spec_padded[i][:, :spec_lengths[i]] = spec_np[i]
+    # for i, spec in enumerate(waves):
+    #     spec_padded[i][:, :spec_lengths[i]] = spec_np[i]
+    
+    # print(spec_lengths)
 
     return spec_padded, spec_lengths
 
@@ -119,13 +132,13 @@ def get_hparams(init=True):
   parser.add_argument('-c', '--config', type=str, default="vits/configs/vits_base.json",help='JSON file for configuration')
   parser.add_argument('-tf', '--training_files', type=str, required=True,help='dataset name')
   parser.add_argument('-lr', '--learning_rate', type=float, required=True,help='learning rate')
-  parser.add_argument('-ms', '--total_steps', type=int, required=True,help='epochs')
+  parser.add_argument('-me', '--max_epochs', type=int, required=True,help='epochs')
   parser.add_argument('-bs', '--batch_size', type=int, required=True,help='batch size')
   parser.add_argument('-m', '--model', type=str, required=True,help='Model name')
   parser.add_argument("-path", "--pretrained_path", type=str, required=True, help="The checkpoint path of the pre-trained model.")
   parser.add_argument('-ns', '--n_speakers', type=int, required=True,help='batch size')
-  parser.add_argument("-ep", "--epsilon", type=float, default=8/255, help="The protective radius of the embedded perturbation by l_p norm.")
-  parser.add_argument("--snr_db", type=float, default=17.0)
+  parser.add_argument("-ep", "--epsilon", type=float, default=1e-2, help="The protective radius of the embedded perturbation by l_p norm.")
+  parser.add_argument("--snr_db", type=float, default=15.0)
   parser.add_argument("--percentile", type=float, default=0.6)
   parser.add_argument("--beta", type=float, default=0.1)
   parser.add_argument("--lambda_pen", type=float, default=1e-3)
@@ -139,7 +152,7 @@ def get_hparams(init=True):
   hparams.config_path = args.config
   hparams.train.training_files = args.training_files
   hparams.train.learning_rate = args.learning_rate
-  hparams.train.total_steps = args.total_steps
+  hparams.train.max_epochs = args.max_epochs
   hparams.train.batch_size = args.batch_size
   hparams.train.pretrained_path = args.pretrained_path
   hparams.train.epsilon = args.epsilon

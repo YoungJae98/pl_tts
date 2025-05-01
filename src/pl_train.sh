@@ -1,10 +1,10 @@
 date
 
-model_name="vits_ref_pt"
-training_file="data/train_txt/model_train.txt"
-m_port=3457
+model_name="attack_origin_train_1"
+training_file="data/train_txt/attack_train_origin_pp.txt"
+m_port=3459
 FOLDER="vits/checkpoints/${model_name}"
-batch_size=24
+batch_size=12
 learning_rate=0.0002
 epochs=2000
 n_speakers=51

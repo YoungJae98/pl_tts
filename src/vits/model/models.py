@@ -498,20 +498,25 @@ class SynthesizerTrn(nn.Module):
     else:
       self.dp = DurationPredictor(hidden_channels, 256, 3, 0.5, gin_channels=gin_channels)
 
-    if self.ref_speaker:
-      self.spk = ReferenceEncoder(gin_channels)
-    else:
-      self.emb_g = nn.Embedding(n_speakers, gin_channels)
+    if self.n_speakers > 1:
+      if self.ref_speaker:
+        self.spk = ReferenceEncoder(gin_channels)
+      else:
+        self.emb_g = nn.Embedding(n_speakers, gin_channels)
     
 
   def forward(self, x, x_lengths, y, y_lengths, sid=None, is_fixed=False, is_clip=True):
 
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
-    if self.ref_speaker:
-      g = self.spk(y.transpose(1,2)).unsqueeze(-1)
-    else:
-      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
 
+    if self.n_speakers > 1:
+      if self.ref_speaker:
+        g = self.spk(y.transpose(1,2)).unsqueeze(-1)
+      else:
+        g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+    else:
+       g = None
+    
     z, m_q, logs_q, y_mask = self.enc_q(y, y_lengths, g=g)
     z_p = self.flow(z, y_mask, g=g)
 
@@ -552,10 +557,13 @@ class SynthesizerTrn(nn.Module):
   def infer(self, x, x_lengths, y=None, sid=None, noise_scale=1, length_scale=1, noise_scale_w=1., max_len=None):
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
 
-    if self.ref_speaker:
-      g = self.spk(y.transpose(1,2)).unsqueeze(-1)
+    if self.n_speakers > 1:
+      if self.ref_speaker:
+        g = self.spk(y.transpose(1,2)).unsqueeze(-1)
+      else:
+        g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
     else:
-      g = self.emb_g(sid).unsqueeze(-1) # [b, h, 1]
+       g = None
 
     if self.use_sdp:
       logw = self.dp(x, x_mask, g=g, reverse=True, noise_scale=noise_scale_w)
@@ -574,6 +582,7 @@ class SynthesizerTrn(nn.Module):
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     z = self.flow(z_p, y_mask, g=g, reverse=True)
     o = self.dec((z * y_mask)[:,:,:max_len], g=g)
+
     return o, attn, y_mask, (z, z_p, m_p, logs_p)
 
   def voice_conversion(self, y, y_lengths, sid_src, sid_tgt):

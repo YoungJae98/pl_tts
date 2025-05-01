@@ -131,3 +131,4 @@ dmypy.json
 src/vits/checkpoints/
 src/lightning_logs/
 src/data/
+src/noise_pop/checkpoints/

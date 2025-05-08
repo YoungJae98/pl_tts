@@ -137,7 +137,7 @@ def get_hparams(init=True):
   parser.add_argument('-m', '--model', type=str, required=True,help='Model name')
   parser.add_argument("-path", "--pretrained_path", type=str, required=True, help="The checkpoint path of the pre-trained model.")
   parser.add_argument('-ns', '--n_speakers', type=int, required=True,help='batch size')
-  parser.add_argument("-ep", "--epsilon", type=float, default=1e-2, help="The protective radius of the embedded perturbation by l_p norm.")
+  parser.add_argument("-ep", "--epsilon", type=float, default=8/255, help="The protective radius of the embedded perturbation by l_p norm.")
   parser.add_argument("--snr_db", type=float, default=15.0)
   parser.add_argument("--percentile", type=float, default=0.6)
   parser.add_argument("--beta", type=float, default=0.1)

@@ -16,6 +16,10 @@ def parse_args():
                         help="Path to hparams config JSON file")
     parser.add_argument("--noise_path", type=str, required=True,
                         help="Path to trained universal delta (.pt)")
+    parser.add_argument("--epsilon", type=float, required=True,
+                        help="Path to trained universal delta (.pt)")
+    parser.add_argument("--percentile", type=float, required=True,
+                        help="Path to trained universal delta (.pt)")
     parser.add_argument("--input", type=str, required=True,
                         help="Input WAV file or directory of WAVs")
     parser.add_argument("--output_dir", type=str, default="perturbed_wavs",
@@ -23,16 +27,16 @@ def parse_args():
     return parser.parse_args()
 
 
-def add_masked_noise(wav_tensor, u_delta, hps):
+def add_masked_noise(wav_tensor, u_delta, hps, epsilon, percentile):
     """
     wav_tensor: [1,1,T]
     u_delta:    [1,1,P]
     returns:    [1,1,T] perturbed by tile&shift + energy mask
     """
     # compute energy gate: [1,1,T]
-    gate = energy_gate(wav_tensor, percentile=0.6, beta=0.1)
-    # clamp and tile universal patch
-    delta = u_delta.clamp(-1e-4, 1e-4)
+    gate = energy_gate(wav_tensor, percentile=percentile, beta=0.1)
+    # clamp and tile universal patch    
+    delta = u_delta.clamp(-epsilon, epsilon)
     noise_full = tile_and_shift(delta, wav_tensor.size(-1))  # [1,1,T]
     # apply mask and add
     # print(torch.sum(noise_full * gate))
@@ -60,20 +64,32 @@ def main():
                 wav_paths.append(os.path.join(args.input, fn))
     else:
         wav_paths = [args.input]
-
+    
+    snr_dbs = []
     # process each file
     for path in wav_paths:
         wav, sr = sf.read(path)
         # convert to torch [1,1,T]
         wav_t = torch.from_numpy(wav).float().unsqueeze(0).unsqueeze(0).to(device)
         # add masked noise
-        pert_t = add_masked_noise(wav_t, u_delta, hps)
+        pert_t = add_masked_noise(wav_t, u_delta, hps, args.epsilon, args.percentile)
         # to numpy
         out = pert_t.squeeze().cpu().numpy()
         # save
+        # print(u_delta)
+        # print("torch.max",torch.max(u_delta))
+        # print("torch.min",torch.min(u_delta))
+        # print("torch.mean",torch.mean(u_delta))
+        # break
         out_path = os.path.join(args.output_dir, os.path.basename(path))
         sf.write(out_path, out, sr)
         print(f"Saved perturbed WAV: {out_path}")
+    #     noise_t = pert_t - wav_t
+    #     signal_rms = wav_t.pow(2).mean().sqrt()
+    #     noise_rms  = noise_t.pow(2).mean().sqrt()
+    #     snr_db = 20 * torch.log10(signal_rms / noise_rms)
+    #     snr_dbs.append(snr_db)
+    # print(torch.mean(torch.FloatTensor(snr_dbs)))
 
 if __name__ == '__main__':
     main()

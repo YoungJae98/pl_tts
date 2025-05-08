@@ -1,8 +1,8 @@
 date
 
-model_name="attack_train_single"
+model_name="attack_train_single_2e-2_0.8"
 training_file="data/train_txt/attack_train_pp.txt"
-m_port=1212
+m_port=3457
 FOLDER="vits/checkpoints/${model_name}"
 batch_size=8
 learning_rate=0.0002

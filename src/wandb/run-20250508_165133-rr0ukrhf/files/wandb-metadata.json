@@ -1,0 +1,84 @@
+{
+  "os":  "Linux-5.15.0-117-generic-x86_64-with-glibc2.35",
+  "python":  "CPython 3.9.22",
+  "startedAt":  "2025-05-08T07:51:33.644773Z",
+  "program":  "/data/youngjae/vits_pl/src/train_sae.py",
+  "codePath":  "src/train_sae.py",
+  "git":  {
+    "remote":  "https://github.com/YoungJae98/vits_pytorch_lightning.git",
+    "commit":  "00df6a867a928452325b6c1362a95af07296e7ab"
+  },
+  "email":  "yj122198@naver.com",
+  "root":  "/data/youngjae/vits_pl/src",
+  "host":  "gpu-1",
+  "executable":  "/home/ubuntu/miniforge3/envs/vits_pl/bin/python",
+  "codePathLocal":  "train_sae.py",
+  "cpu_count":  48,
+  "cpu_count_logical":  48,
+  "gpu":  "Tesla T4",
+  "gpu_count":  8,
+  "disk":  {
+    "/":  {
+      "total":  "207929917440",
+      "used":  "136413859840"
+    }
+  },
+  "memory":  {
+    "total":  "739338100736"
+  },
+  "cpu":  {
+    "count":  48,
+    "countLogical":  48
+  },
+  "gpu_nvidia":  [
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    },
+    {
+      "name":  "Tesla T4",
+      "memoryTotal":  "16106127360",
+      "cudaCores":  2560,
+      "architecture":  "Turing"
+    }
+  ],
+  "cudaVersion":  "12.2"
+}

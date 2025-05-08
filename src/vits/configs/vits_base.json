@@ -82,6 +82,6 @@
         "use_spectral_norm": false,
         "gin_channels":256,
         "use_sdp": true,
-        "ref_speaker": true
+        "ref_speaker": false
     }
 }

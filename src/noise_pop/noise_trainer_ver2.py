@@ -41,8 +41,9 @@ class UniversalPerturbationModule(pl.LightningModule):
         self.epsilon = hps.train.epsilon
         self.inner_steps = 20
         self.alpha = self.epsilon / max(1, self.inner_steps)
-        self.patch_sec = 0.1
-        patch_len = int(hps.data.sampling_rate * self.patch_sec)
+        # self.patch_sec = 0.1
+        # patch_len = int(hps.data.sampling_rate * self.patch_sec)
+        patch_len = 8192
         # universal delta
         self.delta = torch.zeros(1, 1, patch_len).cuda()
         self._logger = logger

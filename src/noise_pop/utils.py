@@ -3,6 +3,8 @@ import argparse
 import torch
 import logging
 import torch.nn.functional as F
+
+from torch_stoi import NegSTOILoss
 from vits.utils.mel_processing import mel_spectrogram_torch, spectrogram_torch
 from vits.utils import utils
 
@@ -109,21 +111,100 @@ def match_local_snr(wav: torch.Tensor, noise: torch.Tensor, snr_db: float = 15.)
     return noise * alpha
 
 
-def mel_recon_loss(hps, wav_hat, wav_ref):
+def compute_kl_divergence(hps, x_hat, z):
+    '''
+        Return the KL-divergence loss of the input distributions.
+    '''
+    x_mel = mel_spectrogram_torch(
+        x_hat.squeeze(1).float(),
+        hps.data.filter_length,
+        hps.data.n_mel_channels,
+        hps.data.sampling_rate,
+        hps.data.hop_length,
+        hps.data.win_length,
+        hps.data.mel_fmin,
+        hps.data.mel_fmax
+    )
+    z_mel = mel_spectrogram_torch(
+        z.squeeze(1).float(),
+        hps.data.filter_length,
+        hps.data.n_mel_channels,
+        hps.data.sampling_rate,
+        hps.data.hop_length,
+        hps.data.win_length,
+        hps.data.mel_fmin,
+        hps.data.mel_fmax
+    )
+
+    p_log = F.log_softmax(x_mel, dim=-1)
+    q = F.softmax(z_mel, dim=-1)
+
+    kl_divergence = F.kl_div(p_log, q, reduction="batchmean")
+
+    return kl_divergence
 
 
-    mel_hat = mel_spectrogram_torch(
-        wav_hat.squeeze(1), hps.data.filter_length, hps.data.n_mel_channels,
-        hps.data.sampling_rate, hps.data.hop_length, hps.data.win_length,
-        hps.data.mel_fmin, hps.data.mel_fmax)
+def compute_reconstruction_loss(hps, wav, wav_hat):
+    '''
+        Return the mel loss of the real and synthesized speech.
+    '''
+    wav_mel = mel_spectrogram_torch(
+        wav.squeeze(1).float(),
+        hps.data.filter_length,
+        hps.data.n_mel_channels,
+        hps.data.sampling_rate,
+        hps.data.hop_length,
+        hps.data.win_length,
+        hps.data.mel_fmin,
+        hps.data.mel_fmax
+    )
+    wav_hat_mel = mel_spectrogram_torch(
+        wav_hat.squeeze(1).float(),
+        hps.data.filter_length,
+        hps.data.n_mel_channels,
+        hps.data.sampling_rate,
+        hps.data.hop_length,
+        hps.data.win_length,
+        hps.data.mel_fmin,
+        hps.data.mel_fmax
+    )
+    loss_mel_wav = F.l1_loss(wav_mel, wav_hat_mel) * hps.train.c_mel
 
-    mel_ref = mel_spectrogram_torch(
-        wav_ref.squeeze(1), hps.data.filter_length, hps.data.n_mel_channels,
-        hps.data.sampling_rate, hps.data.hop_length, hps.data.win_length,
-        hps.data.mel_fmin, hps.data.mel_fmax)
-    
-    return F.l1_loss(mel_hat, mel_ref) * hps.train.c_mel
+    return loss_mel_wav
 
+
+
+def compute_stoi(sample_rate, waveforms, perturb_waveforms):
+    '''
+        Return the STOI loss of the clean and protected speech
+    '''
+    device = waveforms.device
+    stoi_function = NegSTOILoss(sample_rate=sample_rate).to(device)
+
+    loss_stoi = stoi_function(waveforms, perturb_waveforms).mean()
+    return loss_stoi
+
+
+def compute_stft(waveforms, perturb_waveforms):
+    '''
+        Return the STFT loss with L_2 norm of the clean and protected speech
+    '''
+    stft_clean = torch.stft(waveforms, n_fft=2048, win_length=2048, hop_length=512, return_complex=False)
+    stft_p = torch.stft(perturb_waveforms, n_fft=2048, win_length=2048, hop_length=512, return_complex=False)
+    loss_stft = torch.norm(stft_p - stft_clean, p=2)
+
+    return loss_stft
+
+
+def compute_perceptual_loss(hps, p_wav, wav):
+    '''
+        Return the proposed perceptual loss  of the clean and protected speech
+    '''
+    loss_stoi = compute_stoi(hps.data.sampling_rate, wav, p_wav)
+    loss_stft = compute_stft(wav.squeeze(1), p_wav.squeeze(1))
+    loss_perceptual = loss_stoi + loss_stft
+
+    return loss_perceptual
 
 def get_hparams(init=True):
   parser = argparse.ArgumentParser()
@@ -131,13 +212,14 @@ def get_hparams(init=True):
 
   parser.add_argument('-c', '--config', type=str, default="vits/configs/vits_base.json",help='JSON file for configuration')
   parser.add_argument('-tf', '--training_files', type=str, required=True,help='dataset name')
-  parser.add_argument('-lr', '--learning_rate', type=float, required=True,help='learning rate')
   parser.add_argument('-me', '--max_epochs', type=int, required=True,help='epochs')
   parser.add_argument('-bs', '--batch_size', type=int, required=True,help='batch size')
   parser.add_argument('-m', '--model', type=str, required=True,help='Model name')
   parser.add_argument("-path", "--pretrained_path", type=str, required=True, help="The checkpoint path of the pre-trained model.")
   parser.add_argument('-ns', '--n_speakers', type=int, required=True,help='batch size')
-  parser.add_argument("-ep", "--epsilon", type=float, default=8/255, help="The protective radius of the embedded perturbation by l_p norm.")
+  parser.add_argument('-a', '--alpha', type=float, default=0.05, help="alpha for perceptual loss")
+  parser.add_argument('-lr', '--learning_rate', type=float, default=5e-2 ,help='learning rate')
+  parser.add_argument("-ep", "--epsilon", type=float, default=8, help="The protective radius of the embedded perturbation by l_p norm.")
   parser.add_argument("--snr_db", type=float, default=15.0)
   parser.add_argument("--percentile", type=float, default=0.6)
   parser.add_argument("--beta", type=float, default=0.1)
@@ -158,6 +240,7 @@ def get_hparams(init=True):
   hparams.train.epsilon = args.epsilon
   hparams.train.snr_db = args.snr_db
   hparams.train.percentile = args.percentile
+  hparams.train.alpha = args.alpha
   hparams.train.beta = args.beta
   hparams.train.lambda_pen = args.lambda_pen
   hparams.data.n_speakers = args.n_speakers

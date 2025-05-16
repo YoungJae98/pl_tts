@@ -550,11 +550,14 @@ class SynthesizerTrn(nn.Module):
         z_slice, ids_slice = commons.fix_slice_segments(z, y_lengths, self.segment_size)
       else:
         z_slice, ids_slice = commons.rand_slice_segments(z, y_lengths, self.segment_size)
+    else:
+      z_slice = z
+      ids_slice = None
 
     o = self.dec(z_slice, g=g)
     return o, l_length, attn, ids_slice, x_mask, y_mask, (z, z_p, m_p, logs_p, m_q, logs_q)
 
-  def infer(self, x, x_lengths, y=None, sid=None, noise_scale=0, length_scale=1, noise_scale_w=0, max_len=None):
+  def infer(self, x, x_lengths, y=None, sid=None, noise_scale=0, length_scale=1, noise_scale_w=0, max_len=None, return_z=False):
     x, m_p, logs_p, x_mask = self.enc_p(x, x_lengths)
 
     if self.n_speakers > 1:
@@ -581,7 +584,12 @@ class SynthesizerTrn(nn.Module):
 
     z_p = m_p + torch.randn_like(m_p) * torch.exp(logs_p) * noise_scale
     z = self.flow(z_p, y_mask, g=g, reverse=True)
+    if return_z:
+      return z, y_mask, g, max_len
     o = self.dec((z * y_mask)[:,:,:max_len], g=g)
 
     return o, attn, y_mask, (z, z_p, m_p, logs_p)
   
+  def from_z(self, z, y_mask, g, max_len):
+    o = self.dec((z * y_mask)[:,:,:max_len], g=g)
+    return o

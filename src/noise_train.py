@@ -7,7 +7,7 @@ import pytorch_lightning as pl
 from pytorch_lightning.strategies import DDPStrategy
 
 from noise_pop import utils                # HParams 및 로거
-from noise_pop.noise_trainer_safespeech import NoiseModule
+from youngjae.vits_pl.src.noise_pop.noise_trainer_pop_ss import NoiseModule
 
 
 def main():

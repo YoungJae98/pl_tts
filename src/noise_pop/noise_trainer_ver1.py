@@ -30,7 +30,7 @@ import pytorch_lightning as pl
 # Main --------------------------------------------------------------------
 # ──────────────────────────────────────────────────────────────────────────
 
-class UniversalNoiseModule(pl.LightningModule):
+class UnivNoiseModule_ver1(pl.LightningModule):
     def __init__(
         self,
         hps,

@@ -15,7 +15,7 @@ torch.backends.cudnn.enabled = False
 
 
 
-class UniversalPerturbationModule(pl.LightningModule):
+class UnivNoiseModule_ver2(pl.LightningModule):
     def __init__(self, hps, logger):
         super().__init__()
         self.hps = hps
@@ -82,7 +82,7 @@ class UniversalPerturbationModule(pl.LightningModule):
             # print(torch.sum(δ_i))
 
             grad = δ_i.grad.sign()
-            δ_i.data = (δ_i + self.alpha * grad).clamp(-self.epsilon, self.epsilon)
+            δ_i.data = (δ_i + self.alpha * grad * -1).clamp(-self.epsilon, self.epsilon)
             
             # s = δ_i.sum().item()
 

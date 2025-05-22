@@ -130,11 +130,10 @@ dmypy.json
 
 src/vits/checkpoints/
 src/lightning_logs/
-src/data/
 src/noise_pop/checkpoints/
 
-src/capture_z.py
-src/train_sae.py
-src/sae/
+src/sae/checkpoints
+src/sae/vits_z
+src/sae/vits_zgm
 
 src/wandb/

@@ -9,9 +9,9 @@ def get_requirements():
 
 
 setup(
-    name="vits-pl",
-    version="0.0.1",
-    author="yj",
+    name="pl_tts",
+    version="1.0.0",
+    author="genius_98",
     package_dir={"": "src"},
     packages=find_packages(include = ["src", "src.*"]),
     install_requires=get_requirements(),

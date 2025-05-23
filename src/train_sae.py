@@ -30,8 +30,8 @@ val_size         = 500                  # validation 파일 개수
 lr               = 3e-4                 # learning rate
 beta_l1          = [1.0, 2.0, 5.0]      # L1 희소성 계수
 beta_norm        = [0.01, 0.1, 0.2]
-beta_mel         = 0.1
-device           = "cuda:6"
+beta_mel         = 0.05
+device           = "cuda:1"
 batch_shuffle    = True                 # 배치 파일 랜덤 셔플 여부
 
 seed = 1234
@@ -101,7 +101,7 @@ _ = utils.load_checkpoint(f"vits/checkpoints/{checkpoint_name}/{model_name}.pth"
 for p in net_g.parameters():
     p.requires_grad = False
 
-l1 = 1.0
+l1 = 2.0
 norm = 0.1
 
 # for l1 in beta_l1:
@@ -120,8 +120,8 @@ torch.manual_seed(seed)
 torch.cuda.manual_seed_all(seed)
 # ───── Weights & Biases 초기화 ─────────────────────────────────
 wandb.init(
-    project="vits-sae",
-    name=f"{l1}_{norm}",
+    project="vits-sae_mel",
+    name=f"{l1}_{norm}_{beta_mel}",
     config={
         "D": D,
         "gamma": gamma,

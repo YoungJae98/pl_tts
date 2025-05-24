@@ -1,5 +1,5 @@
 
-# VITS-Pytorch Lightning Refactored Training
+# TTS Refactored (pytorch-lightning)
 
 이 리포지토리는 VITS 모델의 학습 스크립트를 PyTorch Lightning v2.5 기준으로 리팩토링한 코드입니다.
 추후 FastSpeech2와 같은 모델들도 확장할 예정입니다.
@@ -23,6 +23,8 @@
 - PyTorch >= 2.0
 - PyTorch Lightning >= 2.5
 - pip install -r requirements.txt
+- conda install pytorch torchaudio
+- apt install espeak-ng (1.51 ver 이상)
 - monotonic alignment는 monotonic alignment 폴더에서 pip install -e . 하면 설정가능 (python setup.py build_ext --inplace는 오류 발생)
 
 

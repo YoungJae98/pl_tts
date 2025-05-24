@@ -101,8 +101,8 @@ _ = utils.load_checkpoint(f"vits/checkpoints/{checkpoint_name}/{model_name}.pth"
 for p in net_g.parameters():
     p.requires_grad = False
 
-l1 = 2.0
-norm = 0.1
+l1 = 5.0
+norm = 0.0
 
 # for l1 in beta_l1:
 #     for norm in beta_norm:
@@ -163,12 +163,12 @@ for epoch in range(1, num_epochs+1):
         o = net_g.from_z(z.squeeze(0).T.unsqueeze(0), mask, g, None)
         o_hat = net_g.from_z(z_hat.squeeze(0).T.unsqueeze(0), mask, g, None)
 
-        loss, recon, sparse, norm = ae.loss(z, h, z_hat)
+        total_loss, recon, sparse, norm = ae.loss(z, h, z_hat)
 
         loss_mel = compute_reconstruction_loss(hps, o, o_hat)
 
-        loss += beta_mel * loss_mel
-
+        # loss += beta_mel * loss_mel
+        loss = beta_mel * loss_mel + sparse
         loss.backward()
 
         accum_counter += 1

@@ -2,6 +2,7 @@ import librosa
 import pyworld as pw
 from collections import defaultdict
 from tqdm import tqdm
+import numpy as np
 
 def get_f0_mean(wav, sr):
     _f0, t = pw.dio(wav.astype(np.float64), sr)  # raw pitch extraction
@@ -19,7 +20,7 @@ def compute_speaker_averages(speaker_wav_dict, sr):
     speaker_stats = {}
     for speaker, wav_paths in tqdm(speaker_wav_dict.items()):
         f0_list, energy_list = [], []
-        for path in wav_paths:
+        for path in tqdm(wav_paths):
             wav, _ = librosa.load(path, sr=sr)
             f0_list.append(get_f0_mean(wav, sr))
             energy_list.append(get_energy_mean(wav))
@@ -61,3 +62,7 @@ low_pitch_speakers = [spk for spk, v in speaker_stats.items() if v['f0_mean'] < 
 high_energy_speakers = [spk for spk, v in speaker_stats.items() if v['energy_mean'] > energy_global_mean * 1.2]
 low_energy_speakers = [spk for spk, v in speaker_stats.items() if v['energy_mean'] < energy_global_mean * 0.8]
 
+print(high_pitch_speakers)
+print(low_pitch_speakers)
+print(high_energy_speakers)
+print(low_energy_speakers)

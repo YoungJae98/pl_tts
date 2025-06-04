@@ -11,7 +11,7 @@ import os, glob, random, torch
 from torch.utils.data import Dataset, DataLoader
 import torch.nn.functional as F
 from tqdm import tqdm
-from sae.models.model import SparseAE, InferDataset
+from sae.models.model import SparseAE
 from vits.model.models import SynthesizerTrn
 from vits.utils import utils
 from vits.text import symbols

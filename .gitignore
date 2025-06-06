@@ -135,5 +135,6 @@ src/noise_pop/checkpoints/
 src/sae/checkpoints
 src/sae/vits_z
 src/sae/vits_zgm
+src/sae/all_speakers*
 
 src/wandb/

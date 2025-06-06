@@ -29,9 +29,17 @@ class SparseAE(nn.Module):
     def forward(self, z, steer = False, num_s = 4.0):
         h = F.relu(self.enc(z))            # (N, k)
         if steer:
-                
+            p_cnt = 0
+            a_cnt = 0
             for h_i in h:
-                h_i[h_i < 2.0] = 0
+                p_cnt += sum(h_i != 0)
+            for h_i in h:
+                h_i[h_i < 1.5] = 0
+            for h_i in h:
+                a_cnt += sum(h_i != 0)
+                
+            print(p_cnt)
+            print(a_cnt)
             if self.set_bias:
                 z_hat = F.linear(h, self.enc.weight.T, self.dec_bias)  # (N, D)
             else:
